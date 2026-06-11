@@ -1,7 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useFavorites } from './hooks/useFavorites';
+import { useWatchlist } from './hooks/useWatchlist';
+import { useSearchHistory } from './hooks/useSearchHistory';
+import { useToast, ToastContainer } from './components/Toast';
 
 interface Movie {
   imdbID: string;
@@ -21,13 +25,23 @@ interface MovieDetails extends Movie {
 }
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<MovieDetails | null>(null);
   const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
-  const { favorites, addFavorite, removeFavorite, isFavorite, isLoaded } = useFavorites();
+  const { addFavorite, isFavorite, isLoaded: favoritesLoaded } = useFavorites();
+  const { addToWatchlist, isInWatchlist, isLoaded: watchlistLoaded } = useWatchlist();
+  const { addSearch } = useSearchHistory();
+  const { toasts, showToast } = useToast();
+
+  useEffect(() => {
+    if (searchQuery) {
+      handleSearch(new Event('submit') as any);
+    }
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +54,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setMovies([]);
+    addSearch(searchQuery);
 
     try {
       const response = await fetch(
@@ -57,10 +72,12 @@ export default function Home() {
         setMovies([]);
       } else {
         setMovies(data.Search || []);
+        showToast(`Found ${data.Search.length} movies`, 'success');
       }
     } catch (err) {
       setError('Error searching movies. Make sure your OMDb API key is set.');
       setMovies([]);
+      showToast('Error searching movies', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +98,7 @@ export default function Home() {
       setSelectedMovie(data);
     } catch (err) {
       setError('Error loading movie details');
+      showToast('Error loading movie details', 'error');
     } finally {
       setDetailsLoading(false);
     }
@@ -88,21 +106,37 @@ export default function Home() {
 
   const handleToggleFavorite = (movie: Movie) => {
     if (isFavorite(movie.imdbID)) {
-      removeFavorite(movie.imdbID);
-    } else {
-      addFavorite({
-        imdbID: movie.imdbID,
-        Title: movie.Title,
-        Year: movie.Year,
-        Poster: movie.Poster,
-      });
+      showToast('Already in favorites', 'info');
+      return;
     }
+    addFavorite({
+      imdbID: movie.imdbID,
+      Title: movie.Title,
+      Year: movie.Year,
+      Poster: movie.Poster,
+    });
+    showToast(`${movie.Title} added to favorites`, 'success');
+  };
+
+  const handleToggleWatchlist = (movie: Movie) => {
+    if (isInWatchlist(movie.imdbID)) {
+      showToast('Already in watchlist', 'info');
+      return;
+    }
+    addToWatchlist({
+      imdbID: movie.imdbID,
+      Title: movie.Title,
+      Year: movie.Year,
+      Poster: movie.Poster,
+    });
+    showToast(`${movie.Title} added to watchlist`, 'success');
   };
 
   // Show movie details modal
   if (selectedMovie) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black py-8 px-4">
+        <ToastContainer toasts={toasts} />
         <main className="w-full max-w-2xl">
           <button
             onClick={() => setSelectedMovie(null)}
@@ -133,23 +167,9 @@ export default function Home() {
 
                 {/* Details */}
                 <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <h1 className="text-3xl font-bold text-black dark:text-white">
-                      {selectedMovie.Title}
-                    </h1>
-                    <button
-                      onClick={() => {
-                        handleToggleFavorite(selectedMovie);
-                      }}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        isFavorite(selectedMovie.imdbID)
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'bg-gray-300 text-black hover:bg-gray-400 dark:bg-gray-700 dark:text-white'
-                      }`}
-                    >
-                      {isFavorite(selectedMovie.imdbID) ? '♥ Favorited' : '♡ Add to Favorites'}
-                    </button>
-                  </div>
+                  <h1 className="text-3xl font-bold text-black dark:text-white mb-4">
+                    {selectedMovie.Title}
+                  </h1>
                   
                   <div className="space-y-3 text-sm mb-6">
                     <p className="text-zinc-600 dark:text-zinc-400">
@@ -161,8 +181,8 @@ export default function Home() {
                     <p className="text-zinc-600 dark:text-zinc-400">
                       <span className="font-semibold text-black dark:text-white">Runtime:</span> {selectedMovie.Runtime}
                     </p>
-                    <p className="text-zinc-600 dark:text-zinc-400">
-                      <span className="font-semibold text-black dark:text-white">Rating:</span> {selectedMovie.imdbRating}/10
+                    <p className="text-yellow-600 dark:text-yellow-400 font-semibold text-lg">
+                      ⭐ {selectedMovie.imdbRating}/10
                     </p>
                     <p className="text-zinc-600 dark:text-zinc-400">
                       <span className="font-semibold text-black dark:text-white">Director:</span> {selectedMovie.Director}
@@ -172,11 +192,38 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div>
+                  <div className="mb-6">
                     <h2 className="text-lg font-semibold text-black dark:text-white mb-2">Plot</h2>
                     <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
                       {selectedMovie.Plot}
                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => {
+                        handleToggleFavorite(selectedMovie);
+                      }}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isFavorite(selectedMovie.imdbID)
+                          ? 'bg-red-500 text-white'
+                          : 'bg-gray-300 text-black hover:bg-gray-400 dark:bg-gray-700 dark:text-white'
+                      }`}
+                    >
+                      {isFavorite(selectedMovie.imdbID) ? '♥ Favorited' : '♡ Add to Favorites'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleToggleWatchlist(selectedMovie);
+                      }}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isInWatchlist(selectedMovie.imdbID)
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-300 text-black hover:bg-gray-400 dark:bg-gray-700 dark:text-white'
+                      }`}
+                    >
+                      {isInWatchlist(selectedMovie.imdbID) ? '📋 In Watchlist' : 'Add to Watchlist'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -190,11 +237,15 @@ export default function Home() {
   // Show search results
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black py-8 px-4">
+      <ToastContainer toasts={toasts} />
       <main className="w-full max-w-4xl">
         {/* Title */}
-        <h1 className="text-4xl font-bold text-center text-black dark:text-white mb-8">
-          Search for Movies
+        <h1 className="text-4xl font-bold text-center text-black dark:text-white mb-2">
+          🔍 Search for Movies
         </h1>
+        <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">
+          Discover your next favorite movie
+        </p>
 
         {/* Search Form */}
         <form onSubmit={handleSearch} className="flex gap-2 mb-8">
@@ -224,13 +275,13 @@ export default function Home() {
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-12">
-            <p className="text-zinc-600 dark:text-zinc-400 text-lg">Loading...</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-lg">🎬 Finding movies...</p>
           </div>
         )}
 
         {/* Results Area */}
         {!isLoading && movies.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {movies.map((movie) => (
               <div key={movie.imdbID} className="rounded-lg overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-shadow">
                 <button
@@ -257,17 +308,28 @@ export default function Home() {
                     </p>
                   </div>
                 </button>
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-4 space-y-2">
                   <button
                     onClick={() => handleToggleFavorite(movie)}
-                    disabled={!isLoaded}
+                    disabled={!favoritesLoaded}
                     className={`w-full py-2 rounded-lg font-medium transition-colors text-sm ${
                       isFavorite(movie.imdbID)
                         ? 'bg-red-500 text-white hover:bg-red-600'
                         : 'bg-gray-200 text-black hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
                     }`}
                   >
-                    {isFavorite(movie.imdbID) ? '♥' : '♡'} Add to Favorites
+                    {isFavorite(movie.imdbID) ? '♥' : '♡'} Favorite
+                  </button>
+                  <button
+                    onClick={() => handleToggleWatchlist(movie)}
+                    disabled={!watchlistLoaded}
+                    className={`w-full py-2 rounded-lg font-medium transition-colors text-sm ${
+                      isInWatchlist(movie.imdbID)
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-gray-200 text-black hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    📋 Watchlist
                   </button>
                 </div>
               </div>

@@ -28,23 +28,43 @@ export default function AboutPage() {
             <ul className="space-y-2 text-zinc-600 dark:text-zinc-400">
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 dark:text-blue-400 font-bold">🔍</span>
-                <span><strong>Search Movies:</strong> Find any movie by title with instant results</span>
+                <span><strong>Smart Search:</strong> Find any movie by title with instant results</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-blue-600 dark:text-blue-400 font-bold">❤️</span>
-                <span><strong>Save Favorites:</strong> Build and manage your personal movie list</span>
+                <span className="text-blue-600 dark:text-blue-400 font-bold">♥</span>
+                <span><strong>Favorites:</strong> Build and manage your personal movie collection</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">📋</span>
+                <span><strong>Watchlist Manager:</strong> Track movies you want to watch, are watching, and have watched</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 dark:text-blue-400 font-bold">⭐</span>
                 <span><strong>Top Rated:</strong> Explore the most acclaimed movies of all time</span>
               </li>
               <li className="flex items-start gap-3">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">🎯</span>
+                <span><strong>Personalized Recommendations:</strong> Get genre-based movie suggestions</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">⏱️</span>
+                <span><strong>Search History:</strong> Track and revisit your previous searches</span>
+              </li>
+              <li className="flex items-start gap-3">
                 <span className="text-blue-600 dark:text-blue-400 font-bold">📊</span>
-                <span><strong>Detailed Information:</strong> View ratings, plots, cast, and more</span>
+                <span><strong>Dashboard:</strong> View statistics and quick access to all features</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">📱</span>
+                <span><strong>Responsive Design:</strong> Works seamlessly on desktop, tablet, and mobile</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 dark:text-blue-400 font-bold">💾</span>
-                <span><strong>Persistent Storage:</strong> Your favorites are saved locally</span>
+                <span><strong>Persistent Storage:</strong> All your data is saved locally in your browser</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">🔔</span>
+                <span><strong>Toast Notifications:</strong> Get real-time feedback on your actions</span>
               </li>
             </ul>
           </section>
@@ -75,33 +95,51 @@ export default function AboutPage() {
             </div>
           </section>
 
-          {/* How to Use */}
+          {/* Pages & Features */}
           <section>
             <h2 className="text-2xl font-bold text-black dark:text-white mb-3">
-              📝 How to Use
+              🗂️ Pages & Features
             </h2>
-            <ol className="space-y-3 text-zinc-600 dark:text-zinc-400 list-decimal list-inside">
-              <li>
-                <span className="font-semibold">Search for Movies:</span> Use the search bar on the home page
-                to find movies by title
-              </li>
-              <li>
-                <span className="font-semibold">View Details:</span> Click on any movie card to see full
-                information including plot, cast, and ratings
-              </li>
-              <li>
-                <span className="font-semibold">Add to Favorites:</span> Click the heart icon to save movies
-                to your favorites list
-              </li>
-              <li>
-                <span className="font-semibold">Manage Favorites:</span> Visit the Favorites page to view
-                and manage your saved movies
-              </li>
-              <li>
-                <span className="font-semibold">Discover Top Rated:</span> Explore the top-rated movies
-                section for critically acclaimed films
-              </li>
-            </ol>
+            <div className="space-y-4 text-zinc-600 dark:text-zinc-400">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">🔍 Search</h3>
+                  <p className="text-sm">Find movies by title. Search history is tracked automatically.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">📊 Dashboard</h3>
+                  <p className="text-sm">View your stats, recent searches, and quick access to all features.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">🎬 Genres</h3>
+                  <p className="text-sm">Browse movies by genre or explore trending categories.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">♥ Favorites</h3>
+                  <p className="text-sm">Manage your collection of favorite movies.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">📋 Watchlist</h3>
+                  <p className="text-sm">Track movies with three statuses: Want to Watch, Watching, Watched.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">⭐ Top Rated</h3>
+                  <p className="text-sm">Discover the world's most critically acclaimed films.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">🎯 Recommendations</h3>
+                  <p className="text-sm">Get personalized recommendations based on genres you select.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">⏱️ History</h3>
+                  <p className="text-sm">View and manage your search history.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-black dark:text-white mb-1">⚙️ Settings</h3>
+                  <p className="text-sm">Export your data or clear all information from your browser.</p>
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* API Info */}
