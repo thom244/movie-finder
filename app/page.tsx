@@ -10,11 +10,22 @@ interface Movie {
   Type: string;
 }
 
+interface MovieDetails extends Movie {
+  Plot: string;
+  Actors: string;
+  Director: string;
+  imdbRating: string;
+  Runtime: string;
+  Genre: string;
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<MovieDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +40,6 @@ export default function Home() {
     setMovies([]);
 
     try {
-      // Using a demo API or placeholder - replace with actual OMDb API
       const response = await fetch(
         `https://www.omdbapi.com/?s=${encodeURIComponent(searchQuery)}&type=movie&apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}`
       );
@@ -54,6 +64,101 @@ export default function Home() {
     }
   };
 
+  const handleMovieClick = async (movieId: string) => {
+    setDetailsLoading(true);
+    try {
+      const response = await fetch(
+        `https://www.omdbapi.com/?i=${movieId}&apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch movie details');
+      }
+
+      const data = await response.json();
+      setSelectedMovie(data);
+    } catch (err) {
+      setError('Error loading movie details');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  // Show movie details modal
+  if (selectedMovie) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black py-8 px-4">
+        <main className="w-full max-w-2xl">
+          <button
+            onClick={() => setSelectedMovie(null)}
+            className="mb-4 px-4 py-2 rounded-lg bg-gray-400 text-white font-medium hover:bg-gray-500 transition-colors"
+          >
+            ← Back
+          </button>
+
+          {detailsLoading ? (
+            <div className="text-center py-12">
+              <p className="text-zinc-600 dark:text-zinc-400 text-lg">Loading details...</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
+              <div className="flex flex-col sm:flex-row gap-6 p-6">
+                {/* Poster */}
+                {selectedMovie.Poster !== 'N/A' ? (
+                  <img
+                    src={selectedMovie.Poster}
+                    alt={selectedMovie.Title}
+                    className="w-full sm:w-48 h-auto rounded-lg"
+                  />
+                ) : (
+                  <div className="w-full sm:w-48 h-72 bg-zinc-200 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
+                    <p className="text-zinc-500">No poster</p>
+                  </div>
+                )}
+
+                {/* Details */}
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold text-black dark:text-white mb-2">
+                    {selectedMovie.Title}
+                  </h1>
+                  
+                  <div className="space-y-3 text-sm mb-6">
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold text-black dark:text-white">Year:</span> {selectedMovie.Year}
+                    </p>
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold text-black dark:text-white">Genre:</span> {selectedMovie.Genre}
+                    </p>
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold text-black dark:text-white">Runtime:</span> {selectedMovie.Runtime}
+                    </p>
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold text-black dark:text-white">Rating:</span> {selectedMovie.imdbRating}/10
+                    </p>
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold text-black dark:text-white">Director:</span> {selectedMovie.Director}
+                    </p>
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold text-black dark:text-white">Actors:</span> {selectedMovie.Actors}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h2 className="text-lg font-semibold text-black dark:text-white mb-2">Plot</h2>
+                    <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      {selectedMovie.Plot}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Show search results
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black py-8 px-4">
       <main className="w-full max-w-4xl">
@@ -98,9 +203,10 @@ export default function Home() {
         {!isLoading && movies.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {movies.map((movie) => (
-              <div
+              <button
                 key={movie.imdbID}
-                className="rounded-lg overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-shadow"
+                onClick={() => handleMovieClick(movie.imdbID)}
+                className="rounded-lg overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-shadow text-left cursor-pointer"
               >
                 {movie.Poster !== 'N/A' ? (
                   <img
@@ -121,7 +227,7 @@ export default function Home() {
                     {movie.Year}
                   </p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
